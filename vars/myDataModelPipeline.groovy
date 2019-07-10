@@ -4,6 +4,7 @@ def call(body) {
     body.delegate = pipelineParameters
     body()
 
+    agent any
     pipeline {
         stages {
             stage('build') {
