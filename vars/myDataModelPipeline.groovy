@@ -9,30 +9,30 @@ def call(body) {
         stages {
             stage('check-changes') {
                 steps {
-                    getCause()
+                    getcause()
                 }
             }
             stage('lint') {
                 when {
-                    anyOf {
-                        environment name: 'BUILD_CAUSE', value: 'MANUALTRIGGER'
-                        changeset "${env.PROJECT_NAME}/**"
+                    anyof {
+                        environment name: 'build_cause', value: 'manualtrigger'
+                        changeset "${env.project_name}/**"
                     }
                 }
                 steps {
-                    githubStatus('pending', "${env.PROJECT_NAME}/${env.STAGE_NAME}")
-                    dir("${env.PROJECT_NAME}") {
+                    githubstatus('pending', "${env.project_name}/${env.stage_name}")
+                    dir("${env.project_name}") {
                         sh 'docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down -v'
                         sh 'docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml run app'
                     }
-                    githubStatus('success', "${env.PROJECT_NAME}/${env.STAGE_NAME}")
+                    githubstatus('success', "${env.project_name}/${env.stage_name}")
                 }
                 post {
                     failure {
-                        githubStatus('failure', "${env.PROJECT_NAME}/${env.STAGE_NAME}")
+                        githubstatus('failure', "${env.project_name}/${env.stage_name}")
                     }
                     always {
-                        dir("${env.PROJECT_NAME}") {
+                        dir("${env.project_name}") {
                             sh 'docker-compose -f docker-compose.yml -f docker-compose.jenkins.yml down -v'
                         }
                     }
@@ -40,100 +40,109 @@ def call(body) {
             }
             stage('build') {
                 when {
-                    anyOf {
-                        environment name: 'BUILD_CAUSE', value: 'MANUALTRIGGER'
-                        changeset "${env.PROJECT_NAME}/**"
+                    anyof {
+                        environment name: 'build_cause', value: 'manualtrigger'
+                        changeset "${env.project_name}/**"
                     }
                 }
                 steps {
-                    dir("${env.PROJECT_NAME}") {
-                        sh "echo ${env.GIT_COMMIT_SHORT} > build/version.txt"
+                    dir("${env.project_name}") {
+                        withdockercontainer(image: "docker.tntdigital.io/tnt/data/data-model-builder:master") {
+                            sh "build-artifact"
+                        }
+                        sh "echo ${env.git_commit_short} > build/version.txt"
                     }
                 }
             }
             stage("deploy-sandbox") {
                 when {
-                    allOf {
-                        expression { return params.DEPLOY_SANDBOX }
-                        anyOf {
-                            environment name: 'BUILD_CAUSE', value: 'MANUALTRIGGER'
-                            changeset "${env.PROJECT_NAME}/**"
+                    allof {
+                        expression { return params.deploy_sandbox }
+                        anyof {
+                            environment name: 'build_cause', value: 'manualtrigger'
+                            changeset "${env.project_name}/**"
                         }
                     }
                 }
                 steps {
-                    dir("${env.PROJECT_NAME}") {
-                        githubStatus('pending', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                    dir("${env.project_name}") {
+                        githubstatus('pending', "${env.stage_name}-${env.project_name}")
 
-                        echo "do something useful"
+                        withdockercontainer(image: "docker.tntdigital.io/tnt/data-aws-cli:master", args: '--entrypoint ""') {
+                            sh "/usr/bin/echo deploy code here"
+                        }
 
-                        githubStatus('success', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                        githubstatus('success', "${env.stage_name}-${env.project_name}")
                     }
                 }
                 post {
                     failure {
-                        githubStatus('failure', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                        githubstatus('failure', "${env.stage_name}-${env.project_name}")
                     }
                 }
             }
             stage("deploy-dev") {
                 when {
-                    allOf {
-                        expression { return params.DEPLOY_DEV }
-                        anyOf {
-                            environment name: 'BUILD_CAUSE', value: 'MANUALTRIGGER'
-                            changeset "${env.PROJECT_NAME}/**"
+                    allof {
+                        expression { return params.deploy_dev }
+                        anyof {
+                            environment name: 'build_cause', value: 'manualtrigger'
+                            changeset "${env.project_name}/**"
                         }
                     }
                 }
                 steps {
-                    dir("${env.PROJECT_NAME}") {
-                        githubStatus('pending', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                    dir("${env.project_name}") {
+                        githubstatus('pending', "${env.stage_name}-${env.project_name}")
 
-                        echo "do something useful"
+                        withdockercontainer(image: "docker.tntdigital.io/tnt/data-aws-cli:master", args: '--entrypoint ""') {
+                            sh "/usr/bin/echo deploy code here"
+                        }
 
-                        githubStatus('success', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                        githubstatus('success', "${env.stage_name}-${env.project_name}")
                     }
                 }
                 post {
                     failure {
-                        githubStatus('failure', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                        githubstatus('failure', "${env.stage_name}-${env.project_name}")
                     }
                 }
             }
             stage("deploy-prd") {
                 when {
-                    allOf {
+                    allof {
                         branch 'master'
-                        expression { return params.DEPLOY_PRD }
-                        anyOf {
-                            environment name: 'BUILD_CAUSE', value: 'MANUALTRIGGER'
-                            changeset "${env.PROJECT_NAME}/**"
+                        expression { return params.deploy_prd }
+                        anyof {
+                            environment name: 'build_cause', value: 'manualtrigger'
+                            changeset "${env.project_name}/**"
                         }
                     }
                 }
                 steps {
-                    dir("${env.PROJECT_NAME}") {
-                        githubStatus('pending', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                    dir("${env.project_name}") {
+                        githubstatus('pending', "${env.stage_name}-${env.project_name}")
+
+                        withdockercontainer(image: "docker.tntdigital.io/tnt/data-aws-cli:master", args: '--entrypoint ""') {
+                            sh "/usr/bin/echo deploy code here"
+                        }
+
+                        githubstatus('success', "${env.stage_name}-${env.project_name}")
                     }
-
-                    echo "do something useful"
-
-                    githubStatus('success', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
                 }
-            }
-            post {
-                failure {
-                    githubStatus('failure', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
+                post {
+                    failure {
+                        githubstatus('failure', "${env.stage_name}-${env.project_name}")
+                    }
                 }
             }
         }
-    }
-    post {
-        failure {
-            script {
-                if( "${env.GIT_BRANCH}" == 'master' ) {
-                    slackSend channel:''
+        post {
+            failure {
+                script {
+                    if( "${env.git_branch}" == 'master' ) {
+                        slacksend channel:''
+                    }
                 }
             }
         }
