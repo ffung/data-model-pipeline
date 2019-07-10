@@ -115,26 +115,25 @@ def call(body) {
                 steps {
                     dir("${env.PROJECT_NAME}") {
                         githubStatus('pending', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
-                        }
-
-                        echo "do something useful"
-
-                        githubStatus('success', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
                     }
+
+                    echo "do something useful"
+
+                    githubStatus('success', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
                 }
-                post {
-                    failure {
-                        githubStatus('failure', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
-                    }
+            }
+            post {
+                failure {
+                    githubStatus('failure', "${env.STAGE_NAME}-${env.PROJECT_NAME}")
                 }
             }
         }
-        post {
-            failure {
-                script {
-                    if( "${env.GIT_BRANCH}" == 'master' ) {
-                        slackSend channel:''
-                    }
+    }
+    post {
+        failure {
+            script {
+                if( "${env.GIT_BRANCH}" == 'master' ) {
+                    slackSend channel:''
                 }
             }
         }
