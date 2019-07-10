@@ -15,7 +15,7 @@ def call(body) {
 
             stage('test') {
                 steps {
-                    echo "Testing $pipelineParams.name"
+                    echo "Testing $pipelineParameters.name"
                 }
             }
         }
